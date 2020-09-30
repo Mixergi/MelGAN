@@ -25,10 +25,13 @@ def wav_to_log_mel(wav_data, sample_rate, n_fft, hop_size, win_length):
 
 def preprocess_save(file_dir, save_dir, sample_rate, n_fft, hop_size, win_length):
     wav_data, _ = librosa.load(file_dir, sample_rate)
-    wav_data = wav_data[:len(wav_data) - len(wav_data) % hop_size - 1]
-    log_mel_spectrogram = wav_to_log_mel(wav_data, sample_rate, n_fft, hop_size, win_length)
+    log_mel_spectrogram = wav_to_log_mel(wav_data[:-(len(wav_data) % hop_size + 1)],
+                                         sample_rate,
+                                         n_fft,
+                                         hop_size,
+                                         win_length)
 
-    np.save(save_dir, np.array([log_mel_spectrogram, wav_data]))
+    np.save(save_dir, np.array([log_mel_spectrogram, wav_data[:-(len(wav_data) % hop_size)]]))
 
 
 def preprocess_loop(file_dir, save_dir, num_workers, sample_rate, n_fft, hop_size, win_length):

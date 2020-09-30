@@ -33,7 +33,9 @@ class ResBlock(tf.keras.layers.Layer):
                                    name=f'conv_2 {self.kernel_size}x1 dilation={self.dilation_rate}')
         ]
 
-    def call(self, x):
+    def call(self, inputs):
+
+        x = inputs
 
         for layer in self.layers:
             x = layer(x)
