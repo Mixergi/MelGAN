@@ -40,7 +40,7 @@ def preprocess_loop(file_dir, save_dir, num_workers, sample_rate, n_fft, hop_siz
 
     for i in tqdm.tqdm(range(math.ceil(len(file_dir)/num_workers))):
         file_path = file_dir[i*num_workers:(i+1)*num_workers]
-        save_path = [os.path.join(save_dir, file_name.split('/')[-1]) for file_name in file_path]
+        save_path = [os.path.join(save_dir, file_name.split('/')[-1] + '.npy') for file_name in file_path]
 
         p.starmap(preprocess_save, [(file_name, save_name, sample_rate, n_fft, hop_size, win_length)
                                      for file_name, save_name in zip(file_path, save_path)])
