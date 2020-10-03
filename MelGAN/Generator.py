@@ -33,3 +33,8 @@ class Generator(tf.keras.Model):
             x = block(x)
 
         return x
+
+    def export_model(self, save_dir, input_shape):
+        input_layer = tf.keras.Input(input_shape)
+        model = tf.keras.Model(input_layer, self.call(input_layer))
+        model.save(save_dir)
