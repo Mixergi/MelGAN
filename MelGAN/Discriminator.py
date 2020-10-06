@@ -15,11 +15,12 @@ class Discriminator_Block(tf.keras.layers.Layer):
 
         for i, (d, f) in enumerate(down_sampling, filters):
             self.blocks += [
-                tf.keras.layers.Conv1D(f, 41, d, padding='same', groups=d**(i+1)),
+                tf.keras.layers.Conv1D(
+                    f, 41, d, padding='same', groups=d**(i+1)),
                 tf.keras.layers.LeakyReLU()
             ]
 
-        self.blocks +=[
+        self.blocks += [
             tf.keras.layers.Conv1D(1024, 5, 1, padding='same'),
             tf.keras.layers.LeakyReLU(),
             tf.keras.layers.Conv1D(1, 3, 1, padding='same')
@@ -33,14 +34,14 @@ class Discriminator_Block(tf.keras.layers.Layer):
                 outputs.append(x)
 
         return outputs
-        
 
 
 class Discriminator(tf.keras.models.Model):
     def __init__(self, n_scale=3, **kwargs):
         super(Discriminator, self).__init__(**kwargs)
 
-        self.discriminator_blocks = [Discriminator_Block() for i in range(n_scale)]
+        self.discriminator_blocks = [
+            Discriminator_Block() for i in range(n_scale)]
 
         self.avgpooling = tf.keras.layers.AveragePooling1D(4)
 
@@ -50,5 +51,5 @@ class Discriminator(tf.keras.models.Model):
             x = block(inputs)
             outputs.append(x)
             inputs = self.avgpooling(inputs)
-        
+
         return outputs

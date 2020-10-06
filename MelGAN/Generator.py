@@ -18,7 +18,8 @@ class Generator(tf.keras.Model):
         for i, s in enumerate(upsample):
             self.blocks.extend([
                 tf.keras.layers.LeakyReLU(),
-                tf.keras.layers.Conv1DTranspose(filters // (2**(i+1)), s*2, s, padding='same'),
+                tf.keras.layers.Conv1DTranspose(
+                    filters // (2**(i+1)), s*2, s, padding='same'),
                 ResStack(filters // (2**(i+1)))
             ])
 
@@ -33,5 +34,3 @@ class Generator(tf.keras.Model):
             x = block(x)
 
         return x
-
-    
