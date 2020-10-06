@@ -1,6 +1,10 @@
 *.pyc
 .idea
 .vscode
+/data/*
+/train/*
+/test/*
+/valid/*
 
 # Created by https://www.toptal.com/developers/gitignore/api/venv
 # Edit at https://www.toptal.com/developers/gitignore?templates=venv
