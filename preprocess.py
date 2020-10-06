@@ -16,6 +16,7 @@ def wav_to_log_mel(wav_data, sample_rate, n_fft, hop_size, win_length):
     mel_spectrogram = librosa.feature.melspectrogram(wav_data,
                                                      sample_rate,
                                                      n_fft=n_fft,
+                                                     hop_length=hop_size,
                                                      win_length=win_length)
 
     log_mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
