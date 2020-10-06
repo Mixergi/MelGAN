@@ -44,11 +44,11 @@ class Discriminator(tf.keras.models.Model):
 
         self.avgpooling = tf.keras.layers.AveragePooling1D(4)
 
-    def call(self, x):
+    def call(self, inputs):
         outputs = []
         for block in self.discriminator_blocks:
-            x = block(x)
+            x = block(inputs)
             outputs.append(x)
-            x = self.avgpooling(x)
+            inputs = self.avgpooling(inputs)
         
         return outputs
