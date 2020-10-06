@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ResStack import ResStack
+from .ResStack import ResStack
 
 
 class Generator(tf.keras.Model):
@@ -33,3 +33,5 @@ class Generator(tf.keras.Model):
             x = block(x)
 
         return x
+
+    
