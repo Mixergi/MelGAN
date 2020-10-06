@@ -1,6 +1,6 @@
+import datetime
 import math
 import os
-import time
 
 import numpy as np
 import tensorflow as tf
@@ -16,6 +16,8 @@ class MelGAN_Trainer():
         self.mse = tf.keras.losses.MeanSquaredError()
         self.mae = tf.keras.losses.MeanAbsoluteError()
 
+        self.use_valid = False
+
         self.metrics_name = [
             'adversarial_loss',
             'feature_matching_loss',
@@ -29,29 +31,57 @@ class MelGAN_Trainer():
         self.valid_metrics = {}
 
     def init_metrics(self):
-        for name in self.metrics_name:
-            self.train_metrics[name] = tf.keras.metrics.Mean()
-            self.valid_metrics[name] = tf.keras.metrics.Mean()
+        for metrics in self.metrics_name:
+            self.train_metrics[metrics] = tf.keras.metrics.Mean()
+            self.valid_metrics[metrics] = tf.keras.metrics.Mean()
 
     def compile(self, D_opt, G_opt):
         self.D_opt = D_opt
         self.G_opt = G_opt
 
-    def train(self, train_dataset, epochs=1, valid_dataset=None):
+    def train(self, train_dataset, epochs=1, valid_dataset=None, use_tensorboard=False):
+
+        if valid_dataset:
+            self.use_valid = True
+
+        current_time =  datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
+        self.train_summary_writter = tf.summary.create_file_writer(train_log_dir)
+
+        if self.use_valid:
+            valid_log_dir = 'logs/gradient_tape/' + current_time + '/test'
+            self.valid_summary_writter = tf.summary.create_file_writer(valid_log_dir)
 
         for epoch in tqdm.tqdm(range(epochs)):
             train_data = train_dataset.create_dataset()
             train_data_length = train_data.get_length()
-
+            
+            print(f'\n{epoch} epochs training_loop')
             for batch in tqdm.tqdm(train_data, total=train_data_length):
                 self._train_step(batch, training=True)
 
-            if valid_dataset:
+            if self.use_valid:
                 valid_data = valid_dataset.create_dataset()
                 valid_data_length = valid_data.get_length()
-
+                print(f'{epoch} epochs valid_loop')
                 for batch in tqdm.tqdm(valid_data, total=valid_data_length):
                     self._train_step(batch, training=False)
+            
+            print()
+
+            for metrics in self.metrics_name:
+                print(f'train_{metrics}: {self.train_metrics[metrics].result()}', endl='     ')
+
+                self.train_metrics[metrics].reset_states()
+
+            print()
+
+            if self.use_valid:
+                for metrics in self.metrics_name:
+                    print(f'valid_{metrics}: {self.valid_metrics[metrics].result()}', endl='     ')
+                    self.valid_metrics[metrics].reset_states()
+            
+            self._write_on_tensorboard(epoch)
 
     @tf.function()
     def _train_step(self, batch, training=True):
@@ -144,3 +174,13 @@ class MelGAN_Trainer():
         y_hat = self.generator(mels)
 
         return y_hat
+
+    def _write_on_tensorboard(self, epoch):
+        with self.train_summary_writter.as_default():
+            for key, value in self.train_metrics.items():
+                tf.summary.scalar(key, value.result(), epoch)
+
+        if self.use_valid:
+            with self.valid_summary_writter.as_default():
+                for key, value in self.valid_metrics.items():
+                    tf.summary.scalar(key, value.result(), epoch)
