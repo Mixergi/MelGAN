@@ -30,6 +30,8 @@ class MelGAN_Trainer():
         self.train_metrics = {}
         self.valid_metrics = {}
 
+        self.init_metrics()
+
     def init_metrics(self):
         for metrics in self.metrics_name:
             self.train_metrics[metrics] = tf.keras.metrics.Mean()
@@ -54,7 +56,7 @@ class MelGAN_Trainer():
 
         for epoch in tqdm.tqdm(range(epochs)):
             train_data = train_dataset.create_dataset()
-            train_data_length = train_data.get_length()
+            train_data_length = train_dataset.get_length()
             
             print(f'\n{epoch} epochs training_loop')
             for batch in tqdm.tqdm(train_data, total=train_data_length):
@@ -62,7 +64,7 @@ class MelGAN_Trainer():
 
             if self.use_valid:
                 valid_data = valid_dataset.create_dataset()
-                valid_data_length = valid_data.get_length()
+                valid_data_length = valid_dataset.get_length()
                 print(f'{epoch} epochs valid_loop')
                 for batch in tqdm.tqdm(valid_data, total=valid_data_length):
                     self._train_step(batch, training=False)
@@ -81,7 +83,8 @@ class MelGAN_Trainer():
                     print(f'valid_{metrics}: {self.valid_metrics[metrics].result()}', endl='     ')
                     self.valid_metrics[metrics].reset_states()
             
-            self._write_on_tensorboard(epoch)
+            if use_tensorboard:
+                self._write_on_tensorboard(epoch)
 
     @tf.function()
     def _train_step(self, batch, training=True):
@@ -97,23 +100,21 @@ class MelGAN_Trainer():
             p_hat = self.discriminator(y_hat)
 
             real_loss = 0
+
+            for output in p:
+                real_loss += tf.reduce_mean(tf.maximum(0.0, 1 - output[-1]))
+
             fake_loss = 0
 
-            for i in range(len(p)):
-                real_loss += self.mse(p[i][-1],
-                                      tf.ones_like(p[i][-1], tf.float32))
-                fake_loss += self.mse(p_hat[i][-1],
-                                      tf.ones_like(p_hat[i][-1], tf.float32))
-
-            real_loss /= len(p)
-            fake_loss /= len(p_hat)
+            for output in p_hat:
+                fake_loss += tf.reduce_mean(tf.maximum(0.0, 1 + output[-1])) 
 
             discriminator_loss = real_loss + fake_loss
 
         if training:
             gradient = tape.gradient(
                 discriminator_loss, self.discriminator.trainable_variables)
-            self.d_opt.apply_gradients(
+            self.D_opt.apply_gradients(
                 zip(gradient, self.discriminator.trainable_variables))
 
             self.train_metrics['real_loss'].update_state(real_loss)
@@ -135,9 +136,9 @@ class MelGAN_Trainer():
 
             adversarial_loss = 0
 
-            for i in range(len(p_hat)):
-                adversarial_loss += self.mse(p_hat[i][-1],
-                                             tf.ones_like(p_hat[i][-1], dtype=tf.float32))
+            for i in p_hat:
+                adversarial_loss += -tf.reduce_mean(i[-1])
+
 
             adversarial_loss /= len(p_hat)
 
@@ -147,7 +148,7 @@ class MelGAN_Trainer():
 
             for i in range(len(p_hat)):
                 for j in range(len(p_hat[i]) - 1):
-                    feature_matching_loss += self. mae(p_hat[i][j], [i][j])
+                    feature_matching_loss += self.mae(p_hat[i][j], p[i][j])
 
             feature_matching_loss /= len(p_hat) * len(p_hat[0])
             generator_loss = adversarial_loss + feature_matching_loss * 10

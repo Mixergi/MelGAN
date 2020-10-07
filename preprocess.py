@@ -32,7 +32,9 @@ def preprocess_save(file_dir, save_dir, sample_rate, n_fft, hop_size, win_length
                                          hop_size,
                                          win_length)
 
-    np.save(save_dir, np.array([log_mel_spectrogram, wav_data[:-(len(wav_data) % hop_size)]]))
+    end_index = -(len(wav_data) % hop_size) if len(wav_data) % hop_size else len(wav_data)
+    save_array = np.array([log_mel_spectrogram, wav_data[:end_index]])
+    np.save(save_dir, save_array)
 
 
 def preprocess_loop(file_dir, save_dir, num_workers, sample_rate, n_fft, hop_size, win_length):

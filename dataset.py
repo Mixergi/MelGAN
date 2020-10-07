@@ -22,7 +22,7 @@ class MelGAN_Dataset:
 
             wav = np.expand_dims(wav, -1)
 
-            return mels, wav
+            yield mels, wav
 
     def create_dataset(self):
         return tf.data.Dataset.from_generator(
@@ -30,5 +30,5 @@ class MelGAN_Dataset:
             output_types=(tf.float32, tf.float32)
             ).prefetch(tf.data.experimental.AUTOTUNE).batch(1)
 
-    def get_lengh(self):
+    def get_length(self):
         return len(os.listdir(self.data_dir))

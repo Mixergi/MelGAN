@@ -23,14 +23,12 @@ class ResBlock(tf.keras.layers.Layer):
             tf.keras.layers.Conv1D(self.filters,
                                    self.kernel_size,
                                    padding='same',
-                                   dilation_rate=(1),
-                                   name=f'conv_1 {self.kernel_size}x1 dilation=1'),
+                                   dilation_rate=(1)),
             tf.keras.layers.LeakyReLU(),
             tf.keras.layers.Conv1D(output_shape,
                                    self.kernel_size,
                                    padding='same',
-                                   dilation_rate=(self.dilation_rate),
-                                   name=f'conv_2 {self.kernel_size}x1 dilation={self.dilation_rate}')
+                                   dilation_rate=(self.dilation_rate))
         ]
 
     def call(self, inputs):
@@ -57,8 +55,7 @@ class ResStack(tf.keras.layers.Layer):
         self.resblocks = [ResBlock(filters,
                                    kernel_size,
                                    int(dilation_rate * (m_conv ** i)),
-                                   initializer_seed,
-                                   name=f'ResBlock {kernel_size}x1 dilation={dilation_rate}')
+                                   initializer_seed)
                           for i, depth
                           in enumerate(range(n_residual))]
 

@@ -13,7 +13,7 @@ class Discriminator_Block(tf.keras.layers.Layer):
             tf.keras.layers.LeakyReLU()
         ]
 
-        for i, (d, f) in enumerate(down_sampling, filters):
+        for i, (d, f) in enumerate(zip(down_sampling, filters)):
             self.blocks += [
                 tf.keras.layers.Conv1D(
                     f, 41, d, padding='same', groups=d**(i+1)),
