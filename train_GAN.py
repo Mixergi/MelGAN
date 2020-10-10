@@ -12,6 +12,7 @@ from utils.train import MelGAN_Trainer
 
 def main(args):
     train_dataset = MelGAN_Dataset(args.train_dir, True)
+    valid_dataset = None
     if args.valid_dir:
         valid_dataset = MelGAN_Dataset(args.valid_dir, True)
 
@@ -35,6 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--valid_dir")
     parser.add_argument("--test_dir")
     parser.add_argument("--epochs", default=hparams["epochs"], type=int)
+    parser.add_argument("--batch_sze", default=1, type=int)
     parser.add_argument("--discriminator_opt", default=hparams["discriminator_opt"])
     parser.add_argument("--discriminator_learning_rate", default=hparams["discriminator_learning_rate"])
     parser.add_argument("--generator_opt", default=hparams["generator_opt"])
