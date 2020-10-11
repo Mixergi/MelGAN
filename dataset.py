@@ -1,3 +1,4 @@
+import math
 import os
 import random
 
@@ -24,11 +25,14 @@ class MelGAN_Dataset:
 
             yield mels, wav
 
-    def create_dataset(self):
+    def create_dataset(self, batch_size=1):
+
+        self.batch_size=batch_size
+
         return tf.data.Dataset.from_generator(
             self._generator, 
             output_types=(tf.float32, tf.float32)
-            ).prefetch(tf.data.experimental.AUTOTUNE).batch(1)
+            ).prefetch(tf.data.experimental.AUTOTUNE).batch(batch_size)
 
     def get_length(self):
-        return len(os.listdir(self.data_dir))
+        return math.ceil(len(os.listdir(self.data_dir)) / batch_size)
