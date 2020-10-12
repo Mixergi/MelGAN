@@ -25,7 +25,7 @@ class MelGAN_Dataset:
 
             yield mels, wav
 
-    def create_dataset(self, batch_size=1):
+    def create(self, batch_size=1):
 
         self.batch_size=batch_size
 

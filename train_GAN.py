@@ -19,14 +19,14 @@ def main(args):
     generator = Generator()
     discriminator = Discriminator()
 
-    trainer = MelGAN_Trainer(discriminator, generator)
+    trainer = MelGAN_Trainer(generator, discriminator)
 
     D_opt = getattr(tf.keras.optimizers, args.discriminator_opt)(args.discriminator_learning_rate)
     G_opt = getattr(tf.keras.optimizers, args.generator_opt)(args.generator_learning_rate)
 
-    trainer.compile(D_opt, G_opt)
+    trainer.compile(G_opt, D_opt)
     
-    trainer.train(train_dataset, args.epochs, valid_dataset, args.use_tensorboard)
+    trainer.train(train_dataset, args.epochs, args.batch_size, valid_dataset, args.use_tensorboard)
 
 
 if __name__ == "__main__":
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--valid_dir")
     parser.add_argument("--test_dir")
     parser.add_argument("--epochs", default=hparams["epochs"], type=int)
-    parser.add_argument("--batch_sze", default=1, type=int)
+    parser.add_argument("--batch_size", default=1, type=int)
     parser.add_argument("--discriminator_opt", default=hparams["discriminator_opt"])
     parser.add_argument("--discriminator_learning_rate", default=hparams["discriminator_learning_rate"])
     parser.add_argument("--generator_opt", default=hparams["generator_opt"])
