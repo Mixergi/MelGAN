@@ -35,4 +35,4 @@ class MelGAN_Dataset:
             ).prefetch(tf.data.experimental.AUTOTUNE).batch(batch_size)
 
     def get_length(self):
-        return math.ceil(len(os.listdir(self.data_dir)) / batch_size)
+        return math.ceil(len(os.listdir(self.data_dir)) / self.batch_size)

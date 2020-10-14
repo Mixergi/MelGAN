@@ -4,6 +4,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 
 class MelGAN_Trainer():
     def __init__(self, generator, discriminator, **kwargs):
@@ -57,10 +58,10 @@ class MelGAN_Trainer():
                 valid_log_dir = 'logs/gradient_tape/' + current_time + '/test'
                 self.valid_summary_writter = tf.summary.create_file_writer(valid_log_dir)
 
-        for epoch in range(epochs):
+        for epoch in tqdm(range(epochs)):
             print(f'{epoch + 1} epochs...')
 
-            for batch in train_dataset.create(batch_size):
+            for batch in tqdm(train_dataset.create(batch_size), total=train_dataset.get_length()):
                 self._train_step(batch, training=True)
 
             if self.valid_use:
@@ -68,13 +69,13 @@ class MelGAN_Trainer():
                     self._train_step(batch, training=False)
 
             for key, value in self.train_metrics.items():
-                print(f"{key}: {value.result()}", endl='\t')
+                print(f"{key}: {value.result()}", end='\t')
 
             print()
 
             if self.valid_use:
                 for key, value in self.valid_metrics.items():
-                    print(f"{key}: {value.result()}", endl='\t')
+                    print(f"{key}: {value.result()}", end='\t')
 
             print()
 
