@@ -97,7 +97,7 @@ class MelGAN_Trainer():
             adversarial_loss = 0
 
             for output in p_hat:
-                adversarial_loss += tf.reduce_mean(output[-1])
+                adversarial_loss += -tf.reduce_mean(output[-1])
             
             adversarial_loss /= len(p_hat)
 
