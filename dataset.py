@@ -1,38 +1,38 @@
-import math
+import glob
 import os
 import random
 
-import numpy as np
-import tensorflow as tf
+import torch
+from torch.utils.data import DataLoader, Dataset
 
-class MelGAN_Dataset:
-    def __init__(self, data_dir, shuffle=True):
+
+class MelWavDataset(Dataset):
+    def __init__(self, data_dir, data_length=32, hop_length=256):
+
         self.data_dir = data_dir
-        self.shuffle = shuffle
+        self.data_length = data_length
+        self.hop_length = hop_length
 
-    def _generator(self):
+        self.file_names = [i[:-7]
+                           for i in glob.glob(os.path.join(self.data_dir, "*.mel.pt"))]
 
-        file_list = os.listdir(self.data_dir)
+    def __len__(self):
+        return len(self.file_names)
 
-        if self.shuffle:
-            random.shuffle(file_list)
+    def __getitem__(self, index):
 
-        for file_dir in file_list:
-            file_dir = os.path.join(self.data_dir, file_dir)
-            mels, wav = np.load(file_dir, allow_pickle=True)
+        wav_dir = self.file_names[index] +  ".pt"
+        mel_dir = self.file_names[index] + ".mel.pt"
 
-            wav = np.expand_dims(wav, -1)
+        wav = torch.load(wav_dir)
+        mel = torch.load(mel_dir)
+        
+        if self.data_length is not "MAX":
+            start_point = random.randint(0, len(mel[0]) - self.data_length - 1)
+            mel = mel[:, start_point : start_point + self.data_length]
 
-            yield mels, wav
+            start_point *= self.hop_length
+            wav = wav[start_point: start_point +
+                    (self.data_length * self.hop_length)].unsqueeze(0)
 
-    def create(self, batch_size=1):
-
-        self.batch_size=batch_size
-
-        return tf.data.Dataset.from_generator(
-            self._generator, 
-            output_types=(tf.float32, tf.float32)
-            ).prefetch(tf.data.experimental.AUTOTUNE).batch(batch_size)
-
-    def get_length(self):
-        return math.ceil(len(os.listdir(self.data_dir)) / self.batch_size)
+        return mel, wav

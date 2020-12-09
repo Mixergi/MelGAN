@@ -1,55 +1,72 @@
-import tensorflow as tf
+import torch.nn as nn
+
+from melgan.weight_layer import WMConv1d
 
 
-class Discriminator_Block(tf.keras.layers.Layer):
-    def __init__(self, **kwargs):
-        super(Discriminator_Block, self).__init__(**kwargs)
+class DiscriminatorBlock(nn.Module):
+    def __init__(self):
+        super().__init__()
 
-        down_sampling = [4, 4, 4, 4]
-        filters = [64, 256, 1024, 1024]
+        down_sampling = 4
 
-        self.blocks = [
-            tf.keras.layers.Conv1D(16, 15, 1, padding='same'),
-            tf.keras.layers.LeakyReLU()
-        ]
+        channels = [64, 256, 1024, 1024]
 
-        for i, (d, f) in enumerate(zip(down_sampling, filters)):
-            self.blocks += [
-                tf.keras.layers.Conv1D(
-                    f, 41, d, padding='same', groups=d**(i+1)),
-                tf.keras.layers.LeakyReLU()
-            ]
+        prev_channel = 16
 
-        self.blocks += [
-            tf.keras.layers.Conv1D(1024, 5, 1, padding='same'),
-            tf.keras.layers.LeakyReLU(),
-            tf.keras.layers.Conv1D(1, 3, 1, padding='same')
-        ]
+        self.blocks = nn.ModuleList([nn.Sequential(
+            nn.ReflectionPad1d(7),
+            WMConv1d(1, prev_channel, 15),
+            nn.LeakyReLU(0.3)
+        )])
+        
+        for i, channel in enumerate(channels):
+            self.blocks.extend([
+                nn.Sequential(
+                    nn.ReflectionPad1d(20),
+                    WMConv1d(prev_channel, channel, 41, 4, groups=4**(i+1)),
+                    nn.LeakyReLU(0.3)
+                )
+            ])
 
-    def call(self, x):
+            prev_channel = channel
+
+        self.blocks.extend([
+            nn.Sequential(
+                nn.ReflectionPad1d(2),
+                WMConv1d(prev_channel, 1024, 5, 1),
+                nn.LeakyReLU(0.3)
+            ), nn.Sequential(
+                nn.ReflectionPad1d(1),
+                WMConv1d(1024, 1, 3, 1)
+            )
+        ])
+
+    def forward(self, x):
         outputs = []
-        for i, block in enumerate(self.blocks):
+
+        for block in self.blocks:
             x = block(x)
-            if i % 2 == 0:
-                outputs.append(x)
-
-        return outputs
-
-
-class Discriminator(tf.keras.models.Model):
-    def __init__(self, n_scale=3, **kwargs):
-        super(Discriminator, self).__init__(**kwargs)
-
-        self.discriminator_blocks = [
-            Discriminator_Block() for i in range(n_scale)]
-
-        self.avgpooling = tf.keras.layers.AveragePooling1D(4)
-
-    def call(self, inputs):
-        outputs = []
-        for block in self.discriminator_blocks:
-            x = block(inputs)
             outputs.append(x)
-            inputs = self.avgpooling(inputs)
+
+        return outputs  
+
+
+class Discriminator(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.blocks = nn.ModuleList([
+            DiscriminatorBlock() for _ in range(3)
+        ])
+
+        self.avg = nn.AvgPool1d(kernel_size=4, stride=2, padding=1, count_include_pad=False)
+
+    def forward(self, x):
+
+        outputs = []
+
+        for block in self.blocks:
+            outputs.append(block(x))
+            x = self.avg(x)
 
         return outputs

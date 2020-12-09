@@ -1,36 +1,40 @@
-import tensorflow as tf
+import torch.nn as nn
 
-from .ResStack import ResStack
+from melgan.res_stack import ResStack
+from melgan.weight_layer import WMConv1d, WMConvTranspose1d
 
 
-class Generator(tf.keras.Model):
-    def __init__(self, **kwargs):
-        super(Generator, self).__init__(**kwargs)
+class Generator(nn.Module):
+    def __init__(self):
+        super().__init__()
 
-        filters = 512
+        input_size = 512
 
         upsample = [8, 8, 2, 2]
 
-        self.blocks = [
-            tf.keras.layers.Conv1D(filters, 7, 1, padding='same')
+        layers = [
+            nn.ReflectionPad1d(3),
+            WMConv1d(80, input_size, 7)
         ]
 
         for i, s in enumerate(upsample):
-            self.blocks.extend([
-                tf.keras.layers.LeakyReLU(),
-                tf.keras.layers.Conv1DTranspose(
-                    filters // (2**(i+1)), s*2, s, padding='same'),
-                ResStack(filters // (2**(i+1)))
-            ])
+            input_size //= 2
+            
+            layers += [
+                nn.LeakyReLU(0.3),
+                WMConvTranspose1d(
+                    input_size*2, input_size, s*2, s, padding=s//2+s%2),
+                ResStack(input_size)
+            ]
 
-        self.blocks.extend([
-            tf.keras.layers.Conv1D(1, 7, 1, padding='same'),
-            tf.keras.layers.Activation(tf.nn.tanh)
-        ])
+        layers += [
+            nn.LeakyReLU(0.3),
+            nn.ReflectionPad1d(3),
+            WMConv1d(input_size, 1, 7, 1),
+            nn.Tanh()
+        ]
 
-    def call(self, x):
+        self.model = nn.Sequential(*layers)
 
-        for block in self.blocks:
-            x = block(x)
-
-        return x
+    def forward(self, x):
+        return self.model(x)
