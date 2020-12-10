@@ -42,14 +42,14 @@ def main(args):
     discriminator_save_dir = glob.glob(os.path.join(args.save_dir, "*_discriminator.pt"))
 
     if generator_save_dir:
-        generator = torch.load(generator_save_dir[-1]).to(device)
-        generator_name = os.path.split(generator_save_dir)[-1]
-        start_epoch = int(generator_name[:generator_name.find('_')])
+        generator = torch.load(generator_save_dir[-1], map_location="cpu").to(device)
+        generator_name = os.path.split(generator_save_dir[-1])[-1]
+        start_epoch = int(generator_name[:generator_name.find('_')]) - 1
     else:
         generator = Generator().to(device)
 
     if discriminator_save_dir:
-        discriminator = torch.load(discriminator_save_dir[-1]).to(device)
+        discriminator = torch.load(discriminator_save_dir[-1], map_location="cpu").to(device)
     else:
         discriminator = Discriminator().to(device)
 
@@ -57,7 +57,7 @@ def main(args):
     d_opt = optim.Adam(discriminator.parameters(), lr=1e-4, betas=(0.5, 0.9))
 
     if args.use_tensorboard:
-        writer = SummaryWriter(args.tensorboard_save_dir, )
+        writer = SummaryWriter(args.tensorboard_save_dir, filename_suffix='MelGAN_Train')
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -162,7 +162,7 @@ def main(args):
 
             discriminator_loss = get_discriminator_loss(p, p_hat)
 
-    save_models(epoch, args.save_dir, generator, discriminator)
+    save_models(args.epochs, args.save_dir, generator, discriminator)
 
 
 def get_generator_loss(p, p_hat):
@@ -196,6 +196,10 @@ def get_discriminator_loss(p, p_hat):
     return discriminator_loss
 
 def save_models(epoch, save_dir, generator, discriminator):
+
+    for save_path in glob.glob(os.path.join(save_dir, "*")):
+        os.remove(save_path)
+
     torch.save(generator, os.path.join(save_dir, f"{epoch+1}_generator.pt"))
     torch.save(discriminator, os.path.join(save_dir, f"{epoch+1}_discriminator.pt"))
 
