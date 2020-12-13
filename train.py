@@ -162,6 +162,8 @@ def main(args):
 
             discriminator_loss = get_discriminator_loss(p, p_hat)
 
+    print(f"Test Generator Loss: {generator_loss}\t Test Discriminator Loss: {discriminator_loss}")
+
     save_models(args.epochs, args.save_dir, generator, discriminator)
 
 
