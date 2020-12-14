@@ -209,7 +209,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--save_dir", default="./models")
-    parser.add_argument("--sample_save_dir", default="./sample_wav")
+    parser.add_argument("--sample_save_dir", default="./samples")
     parser.add_argument("--train_dir", default="./train")
     parser.add_argument("--valid_dir", default="./valid")
     parser.add_argument("--test_dir", default="./test")

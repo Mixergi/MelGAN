@@ -1,0 +1,2 @@
+import melgan.discriminator
+import melgan.generator
